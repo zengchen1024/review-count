@@ -6,10 +6,11 @@ import (
 )
 
 type reviewCount struct {
-	prSearchService *prSearchService
-	commentService  *reviewCommentService
-	maxReviewCount  int
+	excel           *excel
 	reviewer        string
+	maxReviewCount  int
+	commentService  *reviewCommentService
+	prSearchService *prSearchService
 }
 
 func (r *reviewCount) countComment() {
@@ -22,6 +23,10 @@ func (r *reviewCount) countComment() {
 	}
 
 	fmt.Printf("total review count: %d\n", count)
+
+	if err := r.excel.save(); err != nil {
+		fmt.Printf("save file failed, err:%v\n", err)
+	}
 }
 
 func (r *reviewCount) countOnce(times int) (count int, done bool) {
@@ -58,12 +63,17 @@ func (r *reviewCount) countCommentOfPR(item *prSearchItem) (int, error) {
 		return 0, err
 	}
 
-	fmt.Println(item.pullRequestURL())
+	record := reviewRecord{pr: item.pullRequestURL()}
 
 	count := 0
 	for i := range comments {
 		if comment := &comments[i]; comment.isTarget(r.reviewer) {
-			fmt.Printf("  %s | %s", comment.Location, comment.Body)
+			record.commentURL = comment.Location
+			record.comment = comment.Body
+
+			if err := r.excel.write(&record); err != nil {
+				return 0, err
+			}
 
 			count++
 		}
