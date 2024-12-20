@@ -1,6 +1,6 @@
 module github.com/zengchen1024/review-count
 
-go 1.21.0
+go 1.20
 
 require (
 	github.com/opensourceways/server-common-lib v1.0.0
